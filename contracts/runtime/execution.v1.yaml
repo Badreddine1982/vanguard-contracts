@@ -1,0 +1,23 @@
+contract:
+  id: runtime.execution
+  version: 1.0.0
+  status: proposed
+
+provider:
+  input: ExecutionRequest
+  output: ExecutionResult
+
+requirements:
+  request_id_required: true
+  deterministic_errors: true
+  audit_event_required: true
+  timeout_required: true
+
+result:
+  success_required: true
+  error_code_required_on_failure: true
+  evidence_reference_optional: true
+
+governance:
+  adoption: evidence-gated
+  compatibility: backward-compatible-minor
