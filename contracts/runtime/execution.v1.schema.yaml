@@ -1,0 +1,22 @@
+schema:
+  id: runtime.execution.schema
+  version: 1.0.0
+
+ExecutionRequest:
+  required:
+    - request_id
+    - action
+  fields:
+    request_id: string
+    action: string
+    timeout_ms: integer
+
+ExecutionResult:
+  required:
+    - request_id
+    - success
+  fields:
+    request_id: string
+    success: boolean
+    error_code: string|null
+    evidence_reference: string|null
