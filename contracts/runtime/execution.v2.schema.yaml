@@ -1,0 +1,65 @@
+schema:
+  id: runtime.execution.schema
+  version: 2.0.0
+  contract_version: 2.0.0
+
+ExecutionRequest:
+  required:
+    - request_id
+    - action
+    - timeout_ms
+  fields:
+    request_id: string
+    action: string
+    timeout_ms:
+      type: integer
+      minimum: 1
+      unit: milliseconds
+      semantics: "Execution deadline budget, enforced by ActionExecutor."
+
+ActionExecutor:
+  operation: execute
+  input:
+    action: string
+    timeout_ms: positive_integer
+  output:
+    status: completed|timed_out_cancelled|timed_out_unknown
+  requirements:
+    - "Must not report success after the deadline."
+    - "Must cancel cooperatively when possible."
+    - "Must report unknown completion if cancellation cannot be confirmed."
+
+AuditEvent:
+  required:
+    - request_id
+    - action
+    - success
+    - error_code
+  fields:
+    request_id: string
+    action: string
+    success: boolean
+    error_code: string|null
+
+AuditSink:
+  operation: emit
+  input: AuditEvent
+  output: evidence_reference
+  failure: "Raises or reports failure when the event is not accepted."
+
+ExecutionResult:
+  required:
+    - request_id
+    - success
+  fields:
+    request_id: string
+    success: boolean
+    error_code: string|null
+    evidence_reference: string|null
+  error_codes:
+    - INVALID_REQUEST
+    - INVALID_ACTION
+    - INVALID_TIMEOUT
+    - EXECUTION_TIMEOUT
+    - EXECUTION_STATE_UNKNOWN
+    - AUDIT_SINK_FAILURE
