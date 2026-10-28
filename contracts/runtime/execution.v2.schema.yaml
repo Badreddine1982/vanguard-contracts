@@ -15,19 +15,19 @@ ExecutionRequest:
       type: integer
       minimum: 1
       unit: milliseconds
-      semantics: "Execution deadline budget, enforced by ActionExecutor."
+      semantics: "Execution deadline budget enforced by the runtime boundary."
 
 ActionExecutor:
   operation: execute
   input:
     action: string
-    timeout_ms: positive_integer
-  output:
-    status: completed|timed_out_cancelled|timed_out_unknown
+  output: action_completion
   requirements:
-    - "Must not report success after the deadline."
-    - "Must cancel cooperatively when possible."
-    - "Must report unknown completion if cancellation cannot be confirmed."
+    - "Must be asynchronous and cancellation-cooperative."
+    - "Must document external side effects and cancellation guarantees."
+  runtime_deadline_behavior:
+    confirmed_cancellation: EXECUTION_TIMEOUT
+    cancellation_unconfirmed: EXECUTION_STATE_UNKNOWN
 
 AuditEvent:
   required:
@@ -60,6 +60,7 @@ ExecutionResult:
     - INVALID_REQUEST
     - INVALID_ACTION
     - INVALID_TIMEOUT
+    - EXECUTION_FAILURE
     - EXECUTION_TIMEOUT
     - EXECUTION_STATE_UNKNOWN
     - AUDIT_SINK_FAILURE
