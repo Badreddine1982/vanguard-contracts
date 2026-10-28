@@ -42,4 +42,4 @@ result:
 
 governance:
   adoption: evidence-gated
-  compatibility: backward-compatible-minor
+  compatibility: "breaking-before-adoption; version policy to be finalized before adoption"
