@@ -18,21 +18,22 @@ requirements:
   audit_event_sink_acceptance_required: true
   timeout_required: true
   timeout_unit: milliseconds
+  deadline_enforcement_owner: runtime
   timeout_semantics:
-    starts: "Immediately before ActionExecutor begins the action."
-    deadline: "The action must not be reported successful after the deadline."
-    cancellation: "ActionExecutor must cancel cooperatively and report whether cancellation completed."
-    uncertain_completion: "If the deadline expires and cancellation/completion cannot be established, return EXECUTION_STATE_UNKNOWN; do not imply that side effects did not occur."
+    starts: "Immediately before the runtime starts ActionExecutor.execute(action)."
+    deadline: "The runtime must not report success after the deadline."
+    cancellation: "The runtime requests cancellation at the deadline; ActionExecutor must cooperate with cancellation."
+    confirmed_timeout: "Return EXECUTION_TIMEOUT only when cancellation is confirmed."
+    uncertain_completion: "If cancellation is suppressed or does not settle within the cancellation grace period, return EXECUTION_STATE_UNKNOWN; do not imply that side effects did not occur."
 
 action_executor:
   operation: execute
   input:
     - action
-    - timeout_ms
-  output: action_execution_status
-  timeout:
-    expired_and_cancelled: EXECUTION_TIMEOUT
-    expired_but_completion_unknown: EXECUTION_STATE_UNKNOWN
+  output: "Completion of the action coroutine"
+  requirements:
+    - "Must be an asynchronous, cancellation-cooperative operation."
+    - "Must document external side effects and cancellation guarantees."
 
 audit_event:
   type: AuditEvent
@@ -54,11 +55,11 @@ failure_behavior:
   execution_timeout:
     success: false
     error_code: EXECUTION_TIMEOUT
-    note: "Use only when the executor confirms that the timed-out action has been cancelled."
+    note: "Use only when runtime confirms that the action task was cancelled."
   execution_state_unknown:
     success: false
     error_code: EXECUTION_STATE_UNKNOWN
-    note: "The deadline expired but action completion or cancellation is unconfirmed; side effects must be treated as unknown."
+    note: "The deadline expired but cancellation/completion is unconfirmed; side effects must be treated as unknown."
 
 result:
   success_required: true
