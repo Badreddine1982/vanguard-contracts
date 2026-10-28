@@ -1,0 +1,72 @@
+contract:
+  id: runtime.execution
+  version: 2.0.0
+  status: proposed
+
+provider:
+  input: ExecutionRequest
+  output: ExecutionResult
+  required_dependency:
+    audit_sink: AuditSink
+    action_executor: ActionExecutor
+
+requirements:
+  request_id_required: true
+  deterministic_errors: true
+  audit_event_required: true
+  audit_event_emission_owner: runtime
+  audit_event_sink_acceptance_required: true
+  timeout_required: true
+  timeout_unit: milliseconds
+  deadline_enforcement_owner: runtime
+  timeout_semantics:
+    starts: "Immediately before the runtime starts ActionExecutor.execute(action)."
+    deadline: "The runtime must not report success after the deadline."
+    cancellation: "The runtime requests cancellation at the deadline; ActionExecutor must cooperate with cancellation."
+    confirmed_timeout: "Return EXECUTION_TIMEOUT only when cancellation is confirmed."
+    uncertain_completion: "If cancellation is suppressed or does not settle within the cancellation grace period, return EXECUTION_STATE_UNKNOWN; do not imply that side effects did not occur."
+
+action_executor:
+  operation: execute
+  input:
+    - action
+  output: "Completion of the action coroutine"
+  requirements:
+    - "Must be an asynchronous, cancellation-cooperative operation."
+    - "Must document external side effects and cancellation guarantees."
+
+audit_event:
+  type: AuditEvent
+  required_fields:
+    - request_id
+    - action
+    - success
+    - error_code
+  evidence_reference:
+    returned_in: ExecutionResult
+    meaning: "Reference returned by AuditSink after accepting the event."
+
+failure_behavior:
+  audit_sink_failure:
+    success: false
+    error_code: AUDIT_SINK_FAILURE
+    evidence_reference: null
+    note: "Execution fails closed if the sink does not accept the audit event."
+  execution_timeout:
+    success: false
+    error_code: EXECUTION_TIMEOUT
+    note: "Use only when runtime confirms that the action task was cancelled."
+  execution_state_unknown:
+    success: false
+    error_code: EXECUTION_STATE_UNKNOWN
+    note: "The deadline expired but cancellation/completion is unconfirmed; side effects must be treated as unknown."
+
+result:
+  success_required: true
+  error_code_required_on_failure: true
+  evidence_reference_optional: true
+
+governance:
+  adoption: evidence-gated
+  compatibility: "Major-version change from the proposed v1 API; not adopted."
+  automatic_adoption: false

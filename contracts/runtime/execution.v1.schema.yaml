@@ -1,0 +1,41 @@
+schema:
+  id: runtime.execution.schema
+  version: 1.0.0
+
+ExecutionRequest:
+  required:
+    - request_id
+    - action
+    - timeout_ms
+  fields:
+    request_id: string
+    action: string
+    timeout_ms: integer
+
+AuditEvent:
+  required:
+    - request_id
+    - action
+    - success
+    - error_code
+  fields:
+    request_id: string
+    action: string
+    success: boolean
+    error_code: string|null
+
+AuditSink:
+  operation: emit
+  input: AuditEvent
+  output: evidence_reference
+  failure: "Raises or reports failure when the event is not accepted."
+
+ExecutionResult:
+  required:
+    - request_id
+    - success
+  fields:
+    request_id: string
+    success: boolean
+    error_code: string|null
+    evidence_reference: string|null

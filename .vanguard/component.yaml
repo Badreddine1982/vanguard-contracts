@@ -1,0 +1,14 @@
+component:
+  id: vanguard-contracts
+  version: 0.1.0-poc
+  status: incubator
+
+provides:
+  - architectural.contracts
+  - compatibility.rules
+
+requires: []
+
+governance:
+  adoption: evidence-gated
+  authority: explicit-confirmation-required
